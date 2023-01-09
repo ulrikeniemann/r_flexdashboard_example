@@ -1,0 +1,416 @@
+---
+title: "Mini-Beispiel: flexdashboard"
+output:
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
+    css: testflexdashboard.css
+    navbar:
+      - { title: "Datenquelle: AfS", href: "https://www.statistik-berlin-brandenburg.de/", align: right , target: "_blank"}
+---
+<style>                     
+body {
+  max-width:1200px;
+  margin:auto;
+}
+</style>      
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(flexdashboard)
+library(ggplot2)
+library(plotly)
+library(ggiraph)
+library(highcharter)
+library(DT)
+library(tidyverse)
+#
+Bezirk <- c("Bezirk A",
+             "Bezirk B",
+             "Bezirk C",
+             "Bezirk D",
+             "Bezirk E",
+             "Bezirk F",
+             "Bezirk G",
+             "Bezirk H",
+             "Bezirk I",
+             "Bezirk J",
+             "Bezirk K",
+             "Bezirk L",
+             "Berlin Gesamt"
+             )
+Wert <- c(0.5, 0.6, 0.7, 0.55, 0.65, 0.6,
+           0.5, 0.6, 0.7, 0.55, 0.65, 0.6)
+Wert <- c(Wert, mean(Wert))
+testData <- data.frame(Bezirk, Wert)
+
+# Daten: ***********************************************************************
+# Bevölkerung Geschlecht
+datG <- data.frame(
+  Geschlecht = c(rep("männlich", 10), rep("weiblich", 10)),
+  Jahr = rep(c("2011¹", "2012¹", "2013¹", "2014", "2015", 
+               "2016", "2017", "2018", "2019", "2020"), 2),
+  Bevölkerung = c(1617768, 1644451, 1669791, 1696218, 1726533, 
+                  1755700, 1776267, 1792801, 1804273, 1802038, 
+                  1708234, 1730771, 1752038, 1773631, 1793498, 
+                  1819130, 1837228, 1852025, 1865218, 1862050) )
+# Bevölkerung Alter
+datA <- data.frame(
+  Alter = c(rep("unter 15", 10),
+            rep("15 bis unter 65", 10),
+            rep("65 und mehr", 10)) %>% 
+    factor(levels=c("unter 15","15 bis unter 65", "65 und mehr")),
+  Jahr = rep(c("2011¹", "2012¹", "2013¹", "2014", "2015", 
+               "2016", "2017", "2018", "2019", "2020"), 3),
+  Bevölkerung = c(427126, 435943, 445376, 458323, 474131, 
+                  492448, 503171, 512168, 519545, 523074, 
+                  2258320, 2291866, 2320843, 2344437, 2367765, 
+                  2395343, 2416043, 2433094, 2444421, 2435086, 
+                  640556, 647413, 655610, 667089, 678135, 
+                  687039, 694281, 699561, 705525, 705928) )
+
+```
+
+## HTML-Seite (RMarkdown, flexdashboard, highcharter, ggplot2, plotly, ggiraph, DT)
+
+
+
+<!-- ####################################################################### -->
+
+Grafiken {data-icon="fa-signal"data-orientation=rows}
+===================================== 
+
+<!-- ####################################################################### -->
+Row 1
+--------------------------------------------------
+
+### Menschen wohnen in Berlin
+
+```{r}
+valueBox("3 664 088", icon = "fa-users", color = "rgb(249, 34, 71)")
+```
+
+### Menschen wohnen in Brandenburg
+
+```{r}
+valueBox("2 531 071", icon = "fa-user-friends", color = "#092056")
+```
+
+### Durschnittsalter Berlin und Brandenburg
+
+```{r}
+valueBox("44,5 Jahre", icon = "fa-user", color = "#0f358e")
+```
+
+
+<!-- ####################################################################### -->
+Row {data-height=500}
+--------------------------------------------------
+
+### Bevölkerung (highcharter)
+
+```{r}
+datG %>% 
+  hchart(type = "line", 
+          hcaes(x = Jahr, y = Bevölkerung, group = Geschlecht),
+          color = c("#0f358e", "#f92246"),
+          marker = list(symbol = "circle", radius = 8)
+          ) %>%
+  hc_title(text = "Berlin</br><b>Bevölkerung nach Geschlecht</b>",
+           align = "left",
+           margin = 50) %>%
+  hc_chart(marginLeft = 130) %>%
+  hc_size(600, 400) %>%
+  hc_subtitle(text = "Quelle: Amt für Statistik Berlin-Brandenburg",
+              verticalAlign = "bottom") %>%
+  hc_yAxis(
+    title = list(
+      text = "Anzahl in 1000", 
+      align = "high",            
+      margin = 20,                
+      rotation = 0,
+      offset = 0,
+      textAlign = "right",
+      y = -20,
+      x = -15),
+    labels = list(formatter = JS("function () { return (Highcharts.numberFormat(this.value / 1000,0)  + ' Tsd.'); }"))) %>%
+  hc_legend(itemStyle = list(fontWeight = "normal")) %>%
+  hc_exporting(
+    enabled = TRUE, 
+    filename = "Berlin"
+  )
+```
+
+
+### Bevölkerung (highcharter)
+
+```{r}
+datA %>% 
+  hchart(type = "line", 
+         hcaes(x = Jahr, y = Bevölkerung, group = Alter),
+         color = c("#716F73", "#f92246", "#0f358e"),
+         marker = list(symbol = "circle", radius = 8)
+  ) %>%
+  hc_title(text = "Berlin</br><b>Bevölkerung nach Alter</b>",
+           align = "left",
+           margin = 50) %>%
+  hc_chart(marginLeft = 130) %>%
+  hc_size(600, 400) %>%
+  hc_subtitle(text = "Quelle: Amt für Statistik Berlin-Brandenburg",
+             verticalAlign = "bottom") %>%
+  hc_yAxis(
+    title = list(
+      text = "Anzahl in 1000", 
+      align = "high",            
+      margin = 20,                
+      rotation = 0,
+      offset = 0,
+      textAlign = "right",
+      y = -20,
+      x = -15),
+    labels = list(formatter = JS("function () { return (Highcharts.numberFormat(this.value / 1000,0)  + ' Tsd.'); }"))
+    ) %>%
+  hc_legend(itemStyle = list(fontWeight = "normal"))
+```
+
+
+<!-- ####################################################################### -->
+Row 
+--------------------------------------------------
+
+### Quote x
+
+```{r}
+rate <- 45
+gauge(rate, min = 0, max = 100, symbol = '%', gaugeSectors(
+  success = c(80, 100), warning = c(40, 79), danger = c(0, 39),
+  colors = c("#0f358e", "#f92246", "#716F73")
+))
+```
+
+### Durchschnitt y
+
+```{r}
+rating <- 45
+gauge(rating, min = 0, max = 50, gaugeSectors(
+  success = c(41, 50), warning = c(21, 40), danger = c(0, 20),
+  colors = c("#0f358e", "#f92246", "#716F73")
+))
+```
+
+### Kennzahl z
+
+```{r}
+cancellations <- 2
+gauge(cancellations, min = 0, max = 10, gaugeSectors(
+  success = c(7, 10), warning = c(3, 6), danger = c(0, 2),
+  colors = c("#f92246", "#0f358e", "#716F73")
+))
+```
+
+
+<!-- ####################################################################### -->
+Row {data-height=500}
+--------------------------------------------------
+
+### Balken (ggplot i.V.m. plotly) {data-width=400}
+
+```{r}
+p <- ggplot(testData, 
+       aes(x = Bezirk, y = Wert)) + #, 
+           #label = Wert)) + 
+  geom_col(fill = c(rep("#0f358e", 12), "#f92246")) +
+  labs(x = NULL, y = "Verhältnis") +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  theme(strip.placement = "outside",
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1.1),
+        legend.title = element_blank()
+  )
+ggplotly(p, tooltip = c("Bezirk", "Wert"))  %>%
+  config(displaylogo = FALSE)
+
+```
+
+
+
+### Karte (ggplot i.V.m. ggiraph) {data-width=600}
+```{r}
+load("LOR.RData")
+#
+Name <- c("Charlottenburg-Wilmersdorf", 
+            "Friedrichshain-Kreuzberg",
+            "Lichtenberg",
+            "Marzahn-Hellersdorf",
+            "Mitte",
+            "Neukölln",
+            "Pankow",
+            "Reinickendorf",
+            "Spandau",
+            "Steglitz-Zehlendorf",
+            "Tempelhof-Schöneberg",
+            "Treptow-Köpenick")
+Kunden <- c(80, 90, 70, 85, 75, 80,
+            80, 90, 70, 85, 80, 75)
+tab <- data.frame(Name, Kunden)
+# Datenwert an Kartendaten ranspielen
+mapData <- left_join(berlinBEZPoints, tab)
+# kleine Tabelle mit Beschriftung
+valueData <- mapData %>% select(longCenter, latCenter, Kunden, Name) %>% distinct()
+################################################################################
+#
+#
+# Karte
+map <- ggplot(data = mapData,
+              aes(x = long, y = lat, group = group, 
+                  tooltip = paste0(Name, "<br>Quote: ", Kunden))) +
+  geom_polygon_interactive(aes(fill = Kunden)) +
+  geom_path(color = '#696969', size = 1) +
+  coord_map() +
+  theme_void() +
+  theme(legend.position = "none") +
+  geom_text(data = valueData,
+            aes(label = Kunden, x = longCenter, y = latCenter),
+            inherit.aes = FALSE,
+            size = 5,
+            colour="black") +
+  scale_fill_distiller(
+    palette = 1, direction = 1,
+    name = NULL)
+girafe(ggobj = map, height_svg = 4)
+```
+
+
+
+
+
+
+<!-- ####################################################################### -->
+
+Geschlecht {data-navmenu="Tabellen" data-icon="fa-table"}
+=====================================     
+
+
+<!-- ####################################################################### -->
+Column  - {data-height=600}
+------------------
+
+### Tabelle 1 {data-width=700}
+    
+```{r}
+DT::datatable(datG, fillContainer = FALSE,
+                   options = list(
+        # Sprache anpassen
+        language = list(
+          search = "Suche:",
+          lengthMenu = "Zeige _MENU_ Einträge",
+          info = "_START_ bis _END_ von _TOTAL_ Einträgen",
+          paginate = list(previous = "Zurück", `next` = "Weiter"),
+          sInfoFiltered = "(gefiltert von _MAX_ Einträgen)",
+          sZeroRecords = "Keine Einträge vorhanden"
+        )))
+```
+
+Column  - {data-height=600}
+------------------
+    
+### Inhalt {data-width=300}
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
+### Grafik {data-height=300}
+
+```{r}
+datG %>% 
+  hchart(type = "line", 
+          hcaes(x = Jahr, y = Bevölkerung, group = Geschlecht),
+          color = c("#0f358e", "#f92246"),
+          marker = list(symbol = "circle", radius = 8)
+          ) %>%
+  hc_title(text = "Berlin</br><b>Bevölkerung nach Geschlecht</b>",
+           align = "left",
+           margin = 50) %>%
+  hc_chart(marginLeft = 130) %>%
+  hc_size(300, 400) %>%
+  hc_yAxis(
+    title = list(
+      text = "Anzahl in 1000", 
+      align = "high",            
+      margin = 20,                
+      rotation = 0,
+      offset = 0,
+      textAlign = "right",
+      y = -20,
+      x = -15),
+    labels = list(formatter = JS("function () { return (Highcharts.numberFormat(this.value / 1000,0)  + ' Tsd.'); }"))) %>%
+  hc_legend(itemStyle = list(fontWeight = "normal")) %>%
+  hc_exporting(
+    enabled = TRUE, 
+    filename = "Berlin"
+  )
+```
+
+
+
+Alter {data-navmenu="Tabellen" data-icon="fa-table"}
+=====================================     
+
+
+<!-- ####################################################################### -->
+Column  - {data-height=600}
+------------------
+
+### Tabelle 1 {data-width=700}
+    
+```{r}
+DT::datatable(datA, fillContainer = FALSE,
+                   options = list(
+        # Sprache anpassen
+        language = list(
+          search = "Suche:",
+          lengthMenu = "Zeige _MENU_ Einträge",
+          info = "_START_ bis _END_ von _TOTAL_ Einträgen",
+          paginate = list(previous = "Zurück", `next` = "Weiter"),
+          sInfoFiltered = "(gefiltert von _MAX_ Einträgen)",
+          sZeroRecords = "Keine Einträge vorhanden"
+        )))
+```
+
+Column  - {data-height=600}
+------------------
+    
+### Inhalt {data-width=300}
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
+### Grafik {data-height=300}
+
+```{r}
+datA %>% 
+  hchart(type = "line", 
+         hcaes(x = Jahr, y = Bevölkerung, group = Alter),
+         color = c("#716F73", "#f92246", "#0f358e"),
+         marker = list(symbol = "circle", radius = 8)
+  ) %>%
+  hc_title(text = "Berlin</br><b>Bevölkerung nach Alter</b>",
+           align = "left",
+           margin = 50) %>%
+  hc_chart(marginLeft = 130) %>%
+  hc_size(600, 400) %>%
+  hc_subtitle(text = "Quelle: Amt für Statistik Berlin-Brandenburg",
+              verticalAlign = "bottom") %>%
+  hc_yAxis(
+    title = list(
+      text = "Anzahl in 1000", 
+      align = "high",            
+      margin = 20,                
+      rotation = 0,
+      offset = 0,
+      textAlign = "right",
+      y = -20,
+      x = -15),
+    labels = list(formatter = JS("function () { return (Highcharts.numberFormat(this.value / 1000,0)  + ' Tsd.'); }"))
+    ) %>%
+  hc_legend(itemStyle = list(fontWeight = "normal"))
+```

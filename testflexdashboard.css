@@ -1,0 +1,38 @@
+
+body {
+	font-family: "Source Sans Pro",sans-serif;
+	letter-spacing: 0.02em;
+}
+
+/* header-Zeile */
+
+.value-box .icon i {
+	color:white;
+}
+
+.navbar-inverse {
+    background-color: rgba(6, 24, 67, 0.8);
+    border-color: rgba(6, 24, 67, 0.8);
+	min-height:70px;
+}
+
+.navbar-logo img {
+    position: absolute;
+    right: 70px;
+}
+
+.navbar-nav>li>a {
+    padding-top: 24.5px;
+    padding-bottom: 24.5px;
+}
+
+.navbar-brand {
+	padding: 24.5px 15px;
+}
+
+/* value-boxen */
+
+.value-box > .inner {
+	margin-right:100px;
+}
+
